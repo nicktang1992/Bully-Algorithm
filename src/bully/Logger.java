@@ -28,7 +28,7 @@ public class Logger {
 		append("Internal: " + s);
 	}
 
-	private void append(String message) {
+	private synchronized void append(String message) {
 		try {
 			String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date());
 			String line = String.format("[%s | %d ] %s", timestamp, this.uuid, message);

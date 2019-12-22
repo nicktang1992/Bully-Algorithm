@@ -32,6 +32,13 @@ public class Node {
 		this.ipAddress = ipAddress;
 	}
 	
+	public Node(String ipAddress, int port, int timeout) {
+		this.port = port;
+		this.uuid = Util.hashIP(ipAddress);
+		this.timeout = timeout;
+		this.ipAddress = ipAddress;
+	}
+	
 	public int getUuid() {
 		return uuid;
 	}
@@ -45,7 +52,7 @@ public class Node {
 	}
 
 
-	public boolean elect() {
+	public synchronized boolean elect() {
 		connect();
 
 		boolean ok = false;
@@ -65,7 +72,7 @@ public class Node {
 		return ok;
 	}
 	
-	public boolean heartbeat() {
+	public synchronized boolean heartbeat() {
 		boolean alive = false;
 		connect();
 		
@@ -83,7 +90,7 @@ public class Node {
 		
 	}
 
-	public void result() {
+	public synchronized void result() {
 		connect();
 
 		Bully.logger.log(String.format("Send Result %d to %d.", Bully.self.getUuid(), getUuid()));
