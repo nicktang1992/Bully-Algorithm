@@ -10,7 +10,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.net.InetAddress;
 import static bully.Config.*;
 
 
@@ -58,14 +57,14 @@ public class Bully {
 
 			if (args.length > 0 && args[0].equals("NoInitialization")) {
 				initializing = false;
-			}else {
+			}else if (args.length>0) {
 				throw new IncorrectArgumentsException();
 			}
 		
 			coordinator = null;
 
 		} catch (Exception e) {
-			System.err.println(e.getStackTrace()); 
+			e.printStackTrace();
 			System.exit(-1);
 		}
 	}
@@ -189,11 +188,10 @@ public class Bully {
 
 		@Override
 		public void run() {
-			if(coordinator == null
-					||!coordinator.getIpAddress().equals(self.getIpAddress())
-					||!coordinator.heartbeat()) {
+			if(coordinator == null||
+					(!coordinator.getIpAddress().equals(self.getIpAddress())
+					&&!coordinator.heartbeat())) {
 				startElection();
-				return;
 			}
 		}
 		

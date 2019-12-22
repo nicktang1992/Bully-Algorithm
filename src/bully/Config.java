@@ -1,5 +1,4 @@
 package bully;
-import java.net.InetAddress;
 
 public class Config {
 	public static int CONNECTION_TIMEOUT = 3000;
