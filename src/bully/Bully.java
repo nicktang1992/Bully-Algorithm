@@ -15,11 +15,13 @@ import java.util.HashMap;
 public class Bully {
 
 	int timeout = 3000;
-	boolean isInitiator = false;
+	boolean isInitiator = true;
 	BufferedReader reader;
 	PrintWriter writer;
 
 	public static Node self;
+	
+	public static Node coordinator;
 
 	public static Logger logger;
 
@@ -43,7 +45,7 @@ public class Bully {
 			nodes = getNodesConfiguration(args[2]);
 
 			if (args.length > 3) {
-				isInitiator = args[3].equalsIgnoreCase("Initiator");
+				isInitiator = args[3].equalsIgnoreCase("NoInitiation");
 			}
 
 		} catch (Exception e) {
@@ -110,6 +112,7 @@ public class Bully {
 
 		if (this.isInitiator) {
 			startElection();
+			this.isInitiator = false;
 		}
 
 		Socket client;
@@ -142,6 +145,9 @@ public class Bully {
 				startElection();
 			} else if (message == Message.RESULT) {
 				Bully.logger.log(String.format("Received Result from %d.", senderID));
+			} else if(message == Message.HEARTBEAT) {
+				writer.println(Message.ALIVE);
+				Bully.logger.log(String.format("Send ALIVE to %d.", senderID));
 			}
 
 		} catch (Exception e) {

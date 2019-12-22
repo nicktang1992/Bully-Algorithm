@@ -12,7 +12,8 @@ public class Node {
 	private final int uuid;
 	private final int port;
 	private final int timeout;
-
+	private final String ipAddress;
+	
 	private Socket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
@@ -21,14 +22,26 @@ public class Node {
 		this.port = port;
 		this.uuid = uuid;
 		this.timeout = timeout;
+		this.ipAddress = "localhost";
 	}
 
+	public Node(int uuid, String ipAddress, int port, int timeout) {
+		this.port = port;
+		this.uuid = uuid;
+		this.timeout = timeout;
+		this.ipAddress = ipAddress;
+	}
+	
 	public int getUuid() {
 		return uuid;
 	}
 
 	public int getPort() {
 		return port;
+	}
+	
+	public String getIpAddress() {
+		return ipAddress;
 	}
 
 
@@ -38,8 +51,6 @@ public class Node {
 		boolean ok = false;
 
 		Bully.logger.log(String.format("Send Elect %d to %d.", Bully.self.getUuid(), getUuid()));
-
-
 
 		writer.println(Bully.self.getUuid());
 		writer.println(Message.ELECT);
@@ -52,6 +63,24 @@ public class Node {
 		disconnect();
 
 		return ok;
+	}
+	
+	public boolean heartbeat() {
+		boolean alive = false;
+		connect();
+		
+		Bully.logger.log(String.format("Send Heartbeat %d to %d.", Bully.self.getUuid(), getUuid()));
+
+		writer.println(Bully.self.getUuid());
+		writer.println(Message.HEARTBEAT);
+
+		if (getMessage() == Message.ALIVE) {
+			alive = true;
+			Bully.logger.logInternal(String.format("Received ALIVE from %d.", getUuid()));
+		}
+
+		return alive;
+		
 	}
 
 	public void result() {
@@ -80,7 +109,7 @@ public class Node {
 
 	private void connect() {
 		try {
-			socket = new Socket("localhost", this.getPort());
+			socket = new Socket(this.getIpAddress(), this.getPort());
 			socket.setSoTimeout(timeout);
 			writer = new PrintWriter(socket.getOutputStream(), true);
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
