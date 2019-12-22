@@ -7,15 +7,13 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
+import static bully.Config.*;
 
 
 public class Bully {
 
-	int timeout = 3000;
-	boolean isInitiator = true;
+	boolean initializing = true;
 	BufferedReader reader;
 	PrintWriter writer;
 
@@ -34,19 +32,21 @@ public class Bully {
 		bully.getArgs(args);
 		logger = new Logger(Bully.self.getUuid());
 
-
+		bully.initiateSenderTask();
 		bully.listen();
 	}
 
 	void getArgs(String[] args) {
 		try {
 			Bully.self = new Node(Integer.parseInt(args[0]), Integer.parseInt(args[1]),
-					this.timeout);
+					CONNECTION_TIMEOUT);
 			nodes = getNodesConfiguration(args[2]);
 
-			if (args.length > 3) {
-				isInitiator = args[3].equalsIgnoreCase("NoInitiation");
+			if (args.length > 3 && args[3].equals("NoInitialization")) {
+				initializing = false;
 			}
+		
+			coordinator = null;
 
 		} catch (Exception e) {
 			System.err.println(e); // TODO: DEBUG
@@ -66,7 +66,7 @@ public class Bully {
 		Node newNode;
 		while ((line = reader.readLine()) != null) {
 			data = line.split(",");
-			newNode = new Node(Integer.parseInt(data[0]), Integer.parseInt(data[1]), this.timeout);
+			newNode = new Node(Integer.parseInt(data[0]), Integer.parseInt(data[1]), CONNECTION_TIMEOUT);
 			nodes.put(newNode.getUuid(), newNode);
 			System.out.println(String.format("Loaded node: %d, port: %d", newNode.getUuid(), newNode.getPort()));
 		}
@@ -76,7 +76,7 @@ public class Bully {
 	}
 
 	void startElection() {
-		logger.logInternal("Triggering an election.");
+		logger.logInternal(self.getUuid() + " Triggering an election.");
 
 		boolean ok = false;
 		Collection<Node> all = nodes.values();
@@ -90,6 +90,7 @@ public class Bully {
 		// No OK responses, become the new leader.
 		if (ok == false) {
 			logger.log("Timeout Triggered.");
+			coordinator = self;
 			sendResult();
 		}
 	}
@@ -110,16 +111,16 @@ public class Bully {
 	void listen() {
 		boolean listening = true;
 
-		if (this.isInitiator) {
+		if (this.initializing) {
 			startElection();
-			this.isInitiator = false;
+			this.initializing = false;
 		}
 
 		Socket client;
 		try (ServerSocket serverSocket = new ServerSocket(self.getPort())) {
 			while (listening) {
 				client = serverSocket.accept();
-				client.setSoTimeout(timeout);
+				client.setSoTimeout(CONNECTION_TIMEOUT);
 				receive(client);
 			}
 		} catch (IOException e) {
@@ -138,13 +139,13 @@ public class Bully {
 
 			if (message == Message.ELECT) {
 
-
 				writer.println(Message.OK);
 
 				Bully.logger.log(String.format("Send OKAY to %d.", senderID));
 				startElection();
 			} else if (message == Message.RESULT) {
-				Bully.logger.log(String.format("Received Result from %d.", senderID));
+				coordinator = nodes.get(senderID);
+				Bully.logger.log(String.format("Received Result from %d. %d is now the Coordinator", senderID, senderID));
 			} else if(message == Message.HEARTBEAT) {
 				writer.println(Message.ALIVE);
 				Bully.logger.log(String.format("Send ALIVE to %d.", senderID));
@@ -162,5 +163,22 @@ public class Bully {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
+	}
+	
+	private void initiateSenderTask() {
+		Timer timer = new Timer(true);
+		TimerTask heartbeatTask = new HeartbeatTask();
+		timer.scheduleAtFixedRate(heartbeatTask, 0, HEARTBEAT_INTERVAL);
+	}
+	
+	private class HeartbeatTask extends TimerTask{
+
+		@Override
+		public void run() {
+			if(coordinator == null||!coordinator.heartbeat()) {
+				startElection();
+			}
+		}
+		
 	}
 }
