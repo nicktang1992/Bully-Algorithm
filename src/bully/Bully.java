@@ -5,9 +5,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.*;
+import java.net.InetAddress;
 import static bully.Config.*;
 
 
@@ -16,6 +19,8 @@ public class Bully {
 	boolean initializing = true;
 	BufferedReader reader;
 	PrintWriter writer;
+	
+	public static String LOCAL_IP_ADDRESS;
 
 	public static Node self;
 	
@@ -35,23 +40,32 @@ public class Bully {
 		bully.initiateSenderTask();
 		bully.listen();
 	}
+	
+	public Bully() {
+		try {
+			LOCAL_IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			System.err.println("Unable to acquire local IP address.");
+			System.exit(-1);
+		}
+	}
 
 	void getArgs(String[] args) {
 		try {
-			Bully.self = new Node(args[0], PORT,
+			Bully.self = new Node(LOCAL_IP_ADDRESS, PORT,
 					CONNECTION_TIMEOUT);
-			nodes = getNodesConfiguration(args[2]);
+			nodes = getNodesConfiguration(CONFIG_FILE_NAME);
 
-			if (args.length > 2 && args[2].equals("NoInitialization")) {
+			if (args.length > 0 && args[0].equals("NoInitialization")) {
 				initializing = false;
+			}else {
+				throw new IncorrectArgumentsException();
 			}
 		
 			coordinator = null;
 
 		} catch (Exception e) {
-			System.err.println(e); // TODO: DEBUG
-
-			System.err.println(new IncorrectArgumentsException().getMessage());
+			System.err.println(e.getStackTrace()); 
 			System.exit(-1);
 		}
 	}
@@ -175,8 +189,11 @@ public class Bully {
 
 		@Override
 		public void run() {
-			if(coordinator == null||!coordinator.heartbeat()) {
+			if(coordinator == null
+					||!coordinator.getIpAddress().equals(self.getIpAddress())
+					||!coordinator.heartbeat()) {
 				startElection();
+				return;
 			}
 		}
 		
