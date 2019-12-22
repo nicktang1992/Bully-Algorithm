@@ -38,19 +38,11 @@ public class Bully {
 
 	void getArgs(String[] args) {
 		try {
-<<<<<<< HEAD
 			Bully.self = new Node(args[0], PORT,
 					CONNECTION_TIMEOUT);
 			nodes = getNodesConfiguration(args[2]);
 
 			if (args.length > 2 && args[2].equals("NoInitialization")) {
-=======
-			Bully.self = new Node(Integer.parseInt(args[0]), Integer.parseInt(args[1]),
-					CONNECTION_TIMEOUT);
-			nodes = getNodesConfiguration(args[2]);
-
-			if (args.length > 3 && args[3].equals("NoInitialization")) {
->>>>>>> 67494acdc275d7fbe94fb01a9b7cd966111665b6
 				initializing = false;
 			}
 		
@@ -74,11 +66,7 @@ public class Bully {
 		Node newNode;
 		while ((line = reader.readLine()) != null) {
 			data = line.split(",");
-<<<<<<< HEAD
 			newNode = new Node(data[0], PORT, CONNECTION_TIMEOUT);
-=======
-			newNode = new Node(Integer.parseInt(data[0]), Integer.parseInt(data[1]), CONNECTION_TIMEOUT);
->>>>>>> 67494acdc275d7fbe94fb01a9b7cd966111665b6
 			nodes.put(newNode.getUuid(), newNode);
 			System.out.println(String.format("Loaded node: %d, ip: %s, port: %d", newNode.getUuid(), newNode.getIpAddress(), newNode.getPort()));
 		}
