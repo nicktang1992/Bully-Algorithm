@@ -18,6 +18,6 @@ public class Util {
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-		return -1;
+		return Integer.MIN_VALUE;
 	}
 }

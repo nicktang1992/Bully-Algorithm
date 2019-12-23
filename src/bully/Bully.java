@@ -124,11 +124,6 @@ public class Bully {
 	void listen() {
 		boolean listening = true;
 
-		if (this.initializing) {
-			startElection();
-			this.initializing = false;
-		}
-
 		Socket client;
 		try (ServerSocket serverSocket = new ServerSocket(self.getPort())) {
 			while (listening) {

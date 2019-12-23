@@ -53,52 +53,51 @@ public class Node {
 
 
 	public synchronized boolean elect() {
-		connect();
-
 		boolean ok = false;
+		Bully.logger.log(String.format("Sending Elect %d to %d.", Bully.self.getUuid(), getUuid()));
 
-		Bully.logger.log(String.format("Send Elect %d to %d.", Bully.self.getUuid(), getUuid()));
-
-		writer.println(Bully.self.getUuid());
-		writer.println(Message.ELECT);
-
-		if (getMessage() == Message.OK) {
-			ok = true;
-			Bully.logger.logInternal(String.format("Received OKAY from %d.", getUuid()));
+		if(connect()) {		
+			writer.println(Bully.self.getUuid());
+			writer.println(Message.ELECT);
+	
+			if (getMessage() == Message.OK) {
+				ok = true;
+				Bully.logger.logInternal(String.format("Received OKAY from %d.", getUuid()));
+			}
+			disconnect();
 		}
-
-		disconnect();
-
 		return ok;
 	}
 	
 	public synchronized boolean heartbeat() {
 		boolean alive = false;
-		connect();
 		
-		Bully.logger.log(String.format("Send Heartbeat %d to %d.", Bully.self.getUuid(), getUuid()));
+		Bully.logger.log(String.format("Sending Heartbeat %d to %d.", Bully.self.getUuid(), getUuid()));
 
-		writer.println(Bully.self.getUuid());
-		writer.println(Message.HEARTBEAT);
-
-		if (getMessage() == Message.ALIVE) {
-			alive = true;
-			Bully.logger.logInternal(String.format("Received ALIVE from %d.", getUuid()));
+		if(connect()) {
+			writer.println(Bully.self.getUuid());
+			writer.println(Message.HEARTBEAT);
+			
+	
+			if (getMessage() == Message.ALIVE) {
+				alive = true;
+				Bully.logger.logInternal(String.format("Received ALIVE from %d.", getUuid()));
+			}
+			disconnect();
 		}
-
 		return alive;
 		
 	}
 
 	public synchronized void result() {
-		connect();
+		Bully.logger.log(String.format("Sending Result %d to %d.", Bully.self.getUuid(), getUuid()));
 
-		Bully.logger.log(String.format("Send Result %d to %d.", Bully.self.getUuid(), getUuid()));
+		if(connect()){
 
-		writer.println(Bully.self.getUuid());
-		writer.println(Message.RESULT);
-
-		disconnect();
+			writer.println(Bully.self.getUuid());
+			writer.println(Message.RESULT);
+			disconnect();
+		}
 	}
 
 	private Message getMessage() {
@@ -114,7 +113,7 @@ public class Node {
 		return null;
 	}
 
-	private void connect() {
+	private boolean connect() {
 		try {
 			socket = new Socket(this.getIpAddress(), this.getPort());
 			socket.setSoTimeout(timeout);
@@ -122,7 +121,10 @@ public class Node {
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
+			disconnect();
+			return false;
 		}
+		return true;
 	}
 
 	private void disconnect() {
@@ -133,6 +135,7 @@ public class Node {
 			reader = null;
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
+		} catch (NullPointerException e) {
 		}
 	}
 }
