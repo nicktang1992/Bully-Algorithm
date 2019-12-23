@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-
 public class Node {
 
 	private final int uuid;
@@ -17,20 +16,6 @@ public class Node {
 	private Socket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
-
-	public Node(int uuid, int port, int timeout) {
-		this.port = port;
-		this.uuid = uuid;
-		this.timeout = timeout;
-		this.ipAddress = "localhost";
-	}
-
-	public Node(int uuid, String ipAddress, int port, int timeout) {
-		this.port = port;
-		this.uuid = uuid;
-		this.timeout = timeout;
-		this.ipAddress = ipAddress;
-	}
 	
 	public Node(String ipAddress, int port, int timeout) {
 		this.port = port;
@@ -51,18 +36,17 @@ public class Node {
 		return ipAddress;
 	}
 
-
 	public synchronized boolean elect() {
 		boolean ok = false;
-		Bully.logger.log(String.format("Sending Elect %d to %d.", Bully.self.getUuid(), getUuid()));
 
 		if(connect()) {		
 			writer.println(Bully.self.getUuid());
 			writer.println(Message.ELECT);
-	
+			Bully.logger.append(String.format("Sending Elect from %d to %d.", Bully.self.getUuid(), getUuid()));
+
 			if (getMessage() == Message.OK) {
 				ok = true;
-				Bully.logger.logInternal(String.format("Received OKAY from %d.", getUuid()));
+				Bully.logger.append(String.format("Received OKAY from %d.", getUuid()));
 			}
 			disconnect();
 		}
@@ -71,29 +55,24 @@ public class Node {
 	
 	public synchronized boolean heartbeat() {
 		boolean alive = false;
-		
-		Bully.logger.log(String.format("Sending Heartbeat %d to %d.", Bully.self.getUuid(), getUuid()));
-
 		if(connect()) {
 			writer.println(Bully.self.getUuid());
 			writer.println(Message.HEARTBEAT);
 			
-	
+			Bully.logger.append(String.format("Sending Heartbeat from %d to %d.", Bully.self.getUuid(), getUuid()));
+
 			if (getMessage() == Message.ALIVE) {
 				alive = true;
-				Bully.logger.logInternal(String.format("Received ALIVE from %d.", getUuid()));
+				Bully.logger.append(String.format("Received ALIVE from %d.", getUuid()));
 			}
 			disconnect();
 		}
 		return alive;
-		
 	}
 
 	public synchronized void result() {
-		Bully.logger.log(String.format("Sending Result %d to %d.", Bully.self.getUuid(), getUuid()));
-
 		if(connect()){
-
+			Bully.logger.append(String.format("Sending Result %d is the Winner to %d.", Bully.self.getUuid(), getUuid()));
 			writer.println(Bully.self.getUuid());
 			writer.println(Message.RESULT);
 			disconnect();
@@ -136,6 +115,7 @@ public class Node {
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		} catch (NullPointerException e) {
+			
 		}
 	}
 }

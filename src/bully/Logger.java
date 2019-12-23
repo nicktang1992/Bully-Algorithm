@@ -19,16 +19,8 @@ public class Logger {
 			e.printStackTrace();
 		}
 	}
-	
-	public void log(String s) {
-		append("Algorithm: " + s);
-	}
-	
-	public void logInternal(String s) {
-		append("Internal: " + s);
-	}
 
-	private synchronized void append(String message) {
+	public synchronized void append(String message) {
 		try {
 			String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date());
 			String line = String.format("[%s | %d ] %s", timestamp, this.uuid, message);
