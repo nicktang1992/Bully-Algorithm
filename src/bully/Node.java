@@ -99,7 +99,7 @@ public class Node {
 			writer = new PrintWriter(socket.getOutputStream(), true);
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		} catch (Exception e) {
-			System.err.println(e.getMessage());
+			System.err.println(String.format("Uable to connect to %d", this.getUuid()));
 			disconnect();
 			return false;
 		}
